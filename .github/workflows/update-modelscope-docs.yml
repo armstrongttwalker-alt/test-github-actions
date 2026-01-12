@@ -31,32 +31,34 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
+        # 缓存依赖，提高后续运行速度
         cache-dependency-path: 'docs/scripts/requirements.txt'
     
     - name: 📦 安装Python依赖
       run: |
-        cd docs/scripts
-        pip install -r requirements.txt
+        # 在根目录下安装依赖，但指定requirements.txt路径
+        pip install -r docs/scripts/requirements.txt
     
     - name: 📥 下载ModelScope文档
       id: download
       run: |
-        cd docs/flagrelease_en
-        python ../../scripts/download_readmes.py
+        # 关键修复：在仓库根目录执行脚本，并传递正确的路径
+        cd /home/runner/work/test-github-actions/test-github-actions
+        python docs/scripts/download_readmes.py
       continue-on-error: true
     
     - name: 📊 检查文件变更
       id: check-changes
       run: |
-        cd docs/flagrelease_en
+        # 检查是否有文件被修改或新增
         git add -N .
-        if git diff --name-only --exit-code; then
+        if git diff --name-only --exit-code docs/flagrelease_en/model_readmes/; then
           echo "has_changes=false" >> $GITHUB_OUTPUT
           echo "🔄 没有检测到文件变更"
         else
           echo "has_changes=true" >> $GITHUB_OUTPUT
           echo "📝 检测到文件变更:"
-          git diff --name-only
+          git diff --name-only docs/flagrelease_en/model_readmes/
         fi
     
     - name: 💾 提交并推送更改

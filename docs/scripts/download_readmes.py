@@ -11,28 +11,32 @@ from modelscope.hub.snapshot_download import snapshot_download
 
 def download_models():
     """下载所有模型的readme文件到指定目录"""
-    # 1. 确定基础路径
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    flagrelease_dir = os.path.join(base_dir, '..', 'flagrelease_en')
+    # 1. 获取脚本所在目录的绝对路径
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    print(f"脚本目录: {script_dir}")
     
-    # 2. 模型列表文件路径
-    list_file = os.path.join(flagrelease_dir, 'model_list.txt')
+    # 2. 构建项目根目录路径（假设脚本在 docs/scripts/）
+    project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+    print(f"项目根目录: {project_root}")
+    
+    # 3. 模型列表文件路径
+    list_file = os.path.join(project_root, 'docs', 'flagrelease_en', 'model_list.txt')
+    print(f"模型列表文件路径: {list_file}")
+    
     if not os.path.exists(list_file):
         print(f"❌ 错误：找不到模型列表文件 '{list_file}'")
         print(f"当前工作目录: {os.getcwd()}")
-        print(f"脚本目录: {base_dir}")
         sys.exit(1)
     
-    # 3. 读取模型列表
+    # 4. 读取模型列表
     with open(list_file, 'r', encoding='utf-8') as f:
         model_ids = [line.strip() for line in f 
                     if line.strip() and not line.startswith('#')]
     
     print(f"📋 找到 {len(model_ids)} 个模型需要处理")
-    print(f"📁 模型列表文件: {list_file}")
     
-    # 4. 输出目录
-    output_dir = os.path.join(flagrelease_dir, 'model_readmes')
+    # 5. 输出目录
+    output_dir = os.path.join(project_root, 'docs', 'flagrelease_en', 'model_readmes')
     os.makedirs(output_dir, exist_ok=True)
     print(f"📁 输出目录: {output_dir}")
     
@@ -43,7 +47,7 @@ def download_models():
         print(f"\n[{idx}/{len(model_ids)}] 🔍 处理: {model_id}")
         
         try:
-            # 创建临时目录（在当前目录下，避免权限问题）
+            # 创建临时目录
             safe_name = model_id.replace('/', '_')
             temp_dir = os.path.join('/tmp', f"modelscope_{safe_name}")
             os.makedirs(temp_dir, exist_ok=True)
@@ -90,7 +94,7 @@ def download_models():
         for failed in failed_models:
             print(f"  - {failed}")
     
-    # 5. 列出下载的文件
+    # 6. 列出下载的文件
     if os.path.exists(output_dir):
         downloaded_files = os.listdir(output_dir)
         print(f"\n📄 已下载的文件 ({len(downloaded_files)}个):")
