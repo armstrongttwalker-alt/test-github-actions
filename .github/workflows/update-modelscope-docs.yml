@@ -1,0 +1,84 @@
+name: Update ModelScope Documentation
+
+on:
+  # 定时触发（每天UTC时间2:00，即北京时间10:00）
+  schedule:
+    - cron: '0 2 * * *'
+  
+  # 手动触发（在GitHub网页点击运行）
+  workflow_dispatch:
+  
+  # 当model_list.txt或工作流文件变更时触发
+  push:
+    paths:
+      - 'docs/flagrelease_en/model_list.txt'
+      - '.github/workflows/update-modelscope-docs.yml'
+      - 'docs/scripts/download_readmes.py'
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛎️ 检出仓库代码
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: 🐍 设置Python环境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+        cache-dependency-path: 'docs/scripts/requirements.txt'
+    
+    - name: 📦 安装Python依赖
+      run: |
+        cd docs/scripts
+        pip install -r requirements.txt
+    
+    - name: 📥 下载ModelScope文档
+      id: download
+      run: |
+        cd docs/flagrelease_en
+        python ../../scripts/download_readmes.py
+      continue-on-error: true
+    
+    - name: 📊 检查文件变更
+      id: check-changes
+      run: |
+        cd docs/flagrelease_en
+        git add -N .
+        if git diff --name-only --exit-code; then
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "🔄 没有检测到文件变更"
+        else
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "📝 检测到文件变更:"
+          git diff --name-only
+        fi
+    
+    - name: 💾 提交并推送更改
+      if: steps.check-changes.outputs.has_changes == 'true'
+      run: |
+        # 配置Git用户
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # 添加变更文件（只添加flagrelease_en目录下的）
+        git add docs/flagrelease_en/model_readmes/
+        
+        # 提交更改
+        git commit -m "📚 自动更新ModelScope文档 [$(date +'%Y-%m-%d %H:%M')]"
+        
+        # 推送到仓库
+        git push origin HEAD:${{ github.ref_name }}
+        echo "✅ 更改已推送到仓库"
+    
+    - name: 📋 生成执行报告
+      if: always()
+      run: |
+        echo "工作流执行状态: ${{ job.status }}"
+        echo "是否检测到变更: ${{ steps.check-changes.outputs.has_changes }}"
+        echo "执行完成时间: $(date)"
