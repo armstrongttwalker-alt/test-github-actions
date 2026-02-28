@@ -59,7 +59,7 @@ FlagEval (Libra)** is a comprehensive evaluation system and open platform for la
 | Docker Version                  | Docker version 28.0.4, build b8034c0| 
 | Operating System                | Description:    Ubuntu 22.04.4 LTS      | 
 | FlagScale                       | Version: 0.6.0                        | 
-| FlagGems                        | Version: 2.2                          | 
+| FlagGems                        | Version: 4.2.1rc0                          | 
 
 ## Operation Steps
 
